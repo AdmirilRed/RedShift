@@ -7,11 +7,13 @@ import java.util.*;
 import java.lang.*;
 import java.net.*;
 import java.io.*;
+import java.net.DatagramSocket;
 
 public class RedShiftServer implements Runnable {
 
     public static final String DEFAULT_MOTD = "Welcome to the RedShift server!";
     public static final String DEFAULT_CHANNEL_NAME = "general";
+    public static final String DEFAULT_ADDRESS = "localhost";
     public static final int DEFAULT_PORT = 25565;
     public static final int MAX_ATTEMPTS = 3;
 
@@ -58,8 +60,10 @@ public class RedShiftServer implements Runnable {
     public RedShiftServer(int port, String password) 
         throws IOException, NoSuchAlgorithmException {
 
+
         this.port = port;
-        this.socket = new ServerSocket(this.port);
+        InetAddress addr = InetAddress.getLocalHost();
+        this.socket = new ServerSocket(this.port, 50, addr);
 
         this.channels = new HashSet<>();
         this.defaultChannel = this.createChannel(DEFAULT_CHANNEL_NAME);
@@ -262,6 +266,7 @@ class Channel {
 
         for(Client client : clients)
             client.sendMessage(message);
+        System.out.printf("(%s)|%s\n", this.getName(), message);
     }
 
     public int currentUsers() {
@@ -402,15 +407,16 @@ class Client implements Runnable {
                     return;
                 }
                 message = String.format("[%s]: %s", this.handle, message);
-                System.out.printf("(%s)|%s\n", this.currentChannel.getName(), message);
                 this.currentChannel.broadcast(message);
                 
             }
 
         } catch(Exception e) {
 
+            this.disconnect();
             e.printStackTrace();
             System.out.println("Error with client " + this.toString());
+            return;
         }
     }
 
