@@ -192,6 +192,10 @@ public class RedShiftServer implements Runnable {
         
         if(!this.running) {
 
+            String startMessage = String.format("Server started at %s on port %d.\n", 
+                this.socket.getInetAddress(), this.socket.getLocalPort());
+            System.out.println(startMessage);
+
             this.running = true;
             while(this.running) {
 
