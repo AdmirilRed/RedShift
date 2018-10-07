@@ -7,11 +7,11 @@ import socket
 
 class RedShift:
 
-    def __init__(self, ip):
+    def __init__(self, ip, port):
         self.buildGUI()
         self.connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.host = socket.gethostbyname(ip)
-        self.port = 25565
+        self.port = int(port)
         self.messageQueue = []
         self.connection.connect((self.host,self.port))
         with ThreadPoolExecutor(max_workers=2) as executor:
@@ -59,11 +59,12 @@ class RedShift:
         self.button = Button(text="Submit", command=self.dispatcher)
         self.button.grid(row=1, column=1)
 
-def main(ip):
-    RedShift(ip)
+def main(ip, port):
+    RedShift(ip, port)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Messaging platform.')
     parser.add_argument('ip')
+    parser.add_argument('port')
     args = parser.parse_args()
-    main(args.ip)
+    main(args.ip, args.port)
