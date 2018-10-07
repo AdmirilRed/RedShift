@@ -32,7 +32,13 @@ public class RedShiftServer implements Runnable {
 
         try {
 
-            RedShiftServer server = new RedShiftServer(DEFAULT_PORT);
+            RedShiftServer server;
+            if(args.length == 0)
+                server = new RedShiftServer(DEFAULT_PORT);
+            else if(args.length == 1)
+                server = new RedShiftServer(Integer.parseInt(args[0]));
+            else
+                server = new RedShiftServer(Integer.parseInt(args[0]), args[1]);
             Thread t = new Thread(server);
             t.start();
 
