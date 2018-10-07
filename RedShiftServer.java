@@ -14,6 +14,7 @@ public class RedShiftServer implements Runnable {
     public static final String DEFAULT_MOTD = "Welcome to the RedShift server!";
     public static final String DEFAULT_CHANNEL_NAME = "general";
     public static final String DEFAULT_ADDRESS = "localhost";
+    public static final int DEFAULT_BACKLOG = 50;
     public static final int DEFAULT_PORT = 25565;
     public static final int MAX_ATTEMPTS = 3;
 
@@ -69,7 +70,7 @@ public class RedShiftServer implements Runnable {
 
         this.port = port;
         InetAddress addr = InetAddress.getLocalHost();
-        this.socket = new ServerSocket(this.port, 50, addr);
+        this.socket = new ServerSocket(this.port, DEFAULT_BACKLOG, addr);
 
         this.channels = new HashSet<>();
         this.defaultChannel = this.createChannel(DEFAULT_CHANNEL_NAME);
