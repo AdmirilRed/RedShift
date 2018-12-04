@@ -1,5 +1,10 @@
 import java.util.*;
 public class Command {
+    private RedShiftServer server;
+
+    public Command(RedShiftServer server) {
+        this.server = server;
+    }
 
     public void parseCommand(String commandTxt) {
         List<String> commandList = commandTxt.split(" ");
@@ -58,6 +63,11 @@ public class Command {
         }
         String channel = args.get(0);
         String password = args.get(1);
+        if(server.validate(password)){
+            //server.delete(channel);
+        } else {
+            //error message
+        }
     }
 
     public void create(List<String> args) {
@@ -67,6 +77,12 @@ public class Command {
         }
         String channel = args.get(0);
         String password = args.get(1);
+
+        if(server.validate(password)){
+            server.create(channel);
+        } else {
+            //error message
+        }
     }
 
     public void ping() {
