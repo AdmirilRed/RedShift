@@ -6,7 +6,12 @@ import java.util.Deque;
 import java.util.*;
 import java.lang.*;
 import java.net.*;
+import org.json.*;
 import java.io.*;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 public class RedShiftServer implements Runnable {
 
@@ -35,10 +40,17 @@ public class RedShiftServer implements Runnable {
 
             RedShiftServer server;
             if(args.length == 0)
-                server = new RedShiftServer(DEFAULT_PORT);
-            else if(args.length == 1)
-                server = new RedShiftServer(Integer.parseInt(args[0]));
-            else
+                if(new File("config.json").isFile())
+                    server = new RedShiftServer("config.json");
+                else
+                    server = new RedShiftServer(DEFAULT_PORT);
+            else if(args.length == 1) {
+                try {
+                    server = new RedShiftServer(Integer.parseInt(args[0]));
+                } catch(NumberFormatException e) {
+                    server = new RedShiftServer(args[0]);
+                }
+            } else
                 server = new RedShiftServer(Integer.parseInt(args[0]), args[1]);
             Thread t = new Thread(server);
             t.start();
@@ -54,6 +66,26 @@ public class RedShiftServer implements Runnable {
         throws IOException, NoSuchAlgorithmException {
 
         this(DEFAULT_PORT);
+
+    }
+
+    public RedShiftServer(String configFile)
+        throws IOException, NoSuchAlgorithmException {
+
+        this();
+        JSONParser parser = new JSONParser();
+
+        try {
+
+            JSONObject server = (JSONObject) parser.parse(new FileReader(configFile));
+            String servername = (String) server.get("servername");
+            System.out.println(servername);
+
+        } catch(Exception e) {
+
+            e.printStackTrace();
+            System.exit(1);
+        }
 
     }
 
