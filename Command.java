@@ -23,12 +23,17 @@ public class Command {
             case "/kick":
                 kick(client, arguments);
                 break;
-            case "/ping":
-                ping(client);
-                break;
             case "/list":
                 list();
                 break;
+            case "/serenade":
+                Channel chan = client.getCurrentChannel();
+                if(chan!=null)
+                    chan.broadcast("Country rooooad\n" +
+                        "take me hooooome\n" +
+                        "to the plaaaaaaaaaace\n" +
+                        "where i beloooonngg");
+                        break;
             case "/help":
             case default:
                 help(client);
@@ -79,18 +84,26 @@ public class Command {
         String user = args.get(0);
     }
 
-    public void delete(Client client, List<String> args) {
-        if(args.size() != 2) {
+    public void delete(Client client, String args) {
+        if(args==null) {
             //todo: invalid arg message
+            client.sendMessage("Please specify a channel to delete");
             return;
         }
-        String channel = args.get(0);
-        String password = args.get(1);
-        if(server.validate(password)){
-            //server.delete(channel);
-        } else {
-            //error message
+        String channelName = args;
+        Channel channel = server.findChannel(channelName);
+        if(channel==null)
+            client.sendMessage(String.format("Channel %s cannot be deleted because it does not exist", channelName));
+        else{
+            if(channel == server.getDefaultChannel()) {
+                client.sendMessage("Cannot delete default channel");
+                return;
+            }
+            channel.broadcast(String.format("Channel %s has been deleted by %s", channelName, client.getHandle()));
+            server.deleteChannel(channel);
         }
+
+
     }
 
     public void create(Client client, List<String> args) {
@@ -108,9 +121,6 @@ public class Command {
             server.createChannel(channel);
     }
 
-    public void ping(Client client) {
-
-    }
 
     public void list(Client client) {
         client.sendMessage(server);
@@ -122,7 +132,7 @@ public class Command {
                 "/leave\n" +
                 "/create [channel]\n" +
                 "/kick [username]\n" +
-                "/ping\n" +
+                "/serenade\n" +
                 "/list\n" +
                 "/help";
         client.sendMessage(help);
