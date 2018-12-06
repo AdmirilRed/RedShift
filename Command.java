@@ -6,25 +6,25 @@ public class Command {
         this.server = server;
     }
 
-    public void parseCommand(String commandTxt) {
+    public void parseCommand(String commandTxt, Client client) {
         List<String> commandList = commandTxt.split(" ");
         List<String> arguments = commandList.sublist(1, commandList.size());
         String command = commandList.get(0);
         switch(command) {
             case "/leave":
-                leave();
+                leave(client);
                 break;
             case "/join":
-                join(arguments);
+                join(client, arguments);
                 break;
             case "/create":
-                create(arguments);
+                create(client, arguments);
                 break;
             case "/kick":
-                kick(arguments);
+                kick(client, arguments);
                 break;
             case "/ping":
-                ping();
+                ping(client);
                 break;
             case "/list":
                 list();
@@ -36,19 +36,30 @@ public class Command {
         }
     }
 
-    public void leave() {
+    public void isCommand(String message) {
+        if(message!=null && message.startsWith("/"))
+            return true;
+        return false;
+    }
+
+    public void leave(Client client) {
 
     }
 
-    public void join(List<String> args) {
+    public void join(Client client, List<String> args) {
         if(args.size() != 1) {
-            //todo: invalid arg message
+            client.send("Please specify a channel to join");
             return;
         }
         String channel = args.get(0);
+        Channel next = server.findChannel(channel);
+        if(next!= null)
+            client.joinChannel(next);
+        else
+            client.sendMessage("Could not find channel "+channel);
     }
 
-    public void kick(List<String> args) {
+    public void kick(Client client, List<String> args) {
         if(args.size() != 1) {
             //todo: invalid arg message
             return;
@@ -56,7 +67,7 @@ public class Command {
         String user = args.get(0);
     }
 
-    public void delete(List<String> args) {
+    public void delete(Client client, List<String> args) {
         if(args.size() != 2) {
             //todo: invalid arg message
             return;
@@ -70,27 +81,27 @@ public class Command {
         }
     }
 
-    public void create(List<String> args) {
-        if(args.size() != 2) {
+    public void create(Client client, List<String> args) {
+        if(args.size() != 1) {
             //todo: invalid arg message
+            client.sendMessage("Please specify a channel name");
             return;
         }
         String channel = args.get(0);
-        String password = args.get(1);
 
-        if(server.validate(password)){
-            server.create(channel);
-        } else {
-            //error message
-        }
+
+        if(server.findChannel(channel)!=null)
+            client.sendMessage("Channel "+ channel+ " already exists");
+        else
+            server.createChannel(channel);
     }
 
-    public void ping() {
+    public void ping(Client client) {
 
     }
 
-    public void list() {
-
+    public void list(Client client) {
+        client.sendMessage(server);
     }
 
     public void help() {
