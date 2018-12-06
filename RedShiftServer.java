@@ -32,26 +32,23 @@ public class RedShiftServer implements Runnable {
     private byte[] password;
     private String salt;
     private String motd;
-    private Command cmd;
+    //private Command cmd;
 
     public static void main(String [] args) {
 
         try {
 
-            RedShiftServer server;
-            if(args.length == 0)
-                if(new File("config.json").isFile())
-                    server = new RedShiftServer("config.json");
-                else
-                    server = new RedShiftServer(DEFAULT_PORT);
-            else if(args.length == 1) {
-                try {
-                    server = new RedShiftServer(Integer.parseInt(args[0]));
-                } catch(NumberFormatException e) {
-                    server = new RedShiftServer(args[0]);
-                }
-            } else
-                server = new RedShiftServer(Integer.parseInt(args[0]), args[1]);
+            RedShiftServer server = null;
+            String configFile = "config.json";
+
+            if(args.length == 1)
+                configFile = args[0];
+            if(new File(configFile).isFile())
+                server = new RedShiftServer("config.json");
+            else {
+                System.out.println("The file \"" + configFile + "\" was not found! Startup aborted.");
+                System.exit(1);
+            }
             Thread t = new Thread(server);
             t.start();
 
@@ -62,58 +59,58 @@ public class RedShiftServer implements Runnable {
         }
     }
 
-    public RedShiftServer()
-        throws IOException, NoSuchAlgorithmException {
-
-        this(DEFAULT_PORT);
-
-    }
-
     public RedShiftServer(String configFile)
         throws IOException, NoSuchAlgorithmException {
 
-        this();
         JSONParser parser = new JSONParser();
+
+        this.channels = new HashSet<>();
+        InetAddress addr = null;
+        int tempPort = -1;
 
         try {
 
-            JSONObject server = (JSONObject) parser.parse(new FileReader(configFile));
-            String servername = (String) server.get("servername");
-            System.out.println(servername);
+            JSONObject config = (JSONObject) parser.parse(new FileReader(configFile));
+            
+            String serverName = (String) config.get("serverName");
+            String password = (String) config.get("password");
+            if(!password.isEmpty())
+                this.setPassword(password);
+            String motd = (String) config.get("motd");
+            if(!motd.isEmpty())
+                this.motd = motd;
+            else
+                this.motd = DEFAULT_MOTD;
+            String address = (String) config.get("address");
+            addr = InetAddress.getLocalHost();
+            if(!address.isEmpty())
+                addr = InetAddress.getByName(address);
+            String port = (String) config.get("port");
+            if(!port.isEmpty())
+                tempPort = Integer.parseInt(port);
+            else
+                tempPort = DEFAULT_PORT;
+            JSONArray channels = (JSONArray) config.get("channels");
+            for(Object obj : channels) {
+                
+                String channelName = (String) obj;
+                Channel temp = this.createChannel(channelName);
+                if(this.defaultChannel == null)
+                    this.defaultChannel = temp;
+                
+            }
+            //this.cmd = new Command(this);
 
         } catch(Exception e) {
 
+            System.out.println("Error processing the config file!");
             e.printStackTrace();
             System.exit(1);
-        }
 
-    }
+        } finally {
 
-    public RedShiftServer(int port)
-        throws IOException, NoSuchAlgorithmException {
-
-        this(port, null);
-
-    }
-
-    public RedShiftServer(int port, String password) 
-        throws IOException, NoSuchAlgorithmException {
-
-
-        this.port = port;
-        InetAddress addr = InetAddress.getLocalHost();
-        this.socket = new ServerSocket(this.port, DEFAULT_BACKLOG, addr);
-
-        this.channels = new HashSet<>();
-        this.defaultChannel = this.createChannel(DEFAULT_CHANNEL_NAME);
-        this.cmd = new Command(this);
-
-        this.motd = DEFAULT_MOTD;
-
-        if(password != null) {
-
-            this.requirePassword = true;
-            this.setPassword(password);
+            this.port = tempPort;
+            this.socket = new ServerSocket(this.port, DEFAULT_BACKLOG, addr);
 
         }
 
@@ -125,6 +122,7 @@ public class RedShiftServer implements Runnable {
         SecureRandom cryptogen = new SecureRandom();
         this.salt = "" + cryptogen.nextInt();
         this.password = hash(this.salt + password);
+        this.requirePassword = true;
 
     }
 

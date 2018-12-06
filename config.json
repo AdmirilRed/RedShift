@@ -1,14 +1,12 @@
 {  
-    "servername":"RedShift",
+    "serverName":"RedShift",
     "password":"",
     "motd":"Welcome to the server!",
+    "address":"",
     "port":"25565",
     "channels": [
-        {
-            "channelname":"general",
-            "password":"",
-            "pin":""
-        }
+        "general",
+        "test"
     ]
 }
 
