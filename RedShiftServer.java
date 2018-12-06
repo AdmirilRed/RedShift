@@ -32,6 +32,7 @@ public class RedShiftServer implements Runnable {
     private byte[] password;
     private String salt;
     private String motd;
+    private Command cmd;
 
     public static void main(String [] args) {
 
@@ -105,6 +106,7 @@ public class RedShiftServer implements Runnable {
 
         this.channels = new HashSet<>();
         this.defaultChannel = this.createChannel(DEFAULT_CHANNEL_NAME);
+        this.cmd = new Command(this);
 
         this.motd = DEFAULT_MOTD;
 
@@ -208,6 +210,7 @@ public class RedShiftServer implements Runnable {
         return newChannel;
 
     }
+
 
     public Channel getDefaultChannel() {
 
