@@ -32,7 +32,7 @@ public class RedShiftServer implements Runnable {
     private byte[] password;
     private String salt;
     private String motd;
-    //private Command cmd;
+    public Command cmd;
 
     public static void main(String [] args) {
 
@@ -114,6 +114,15 @@ public class RedShiftServer implements Runnable {
 
         }
 
+    }
+
+    public Channel findChannel(String channelName) {
+        for(Channel channel : channels){
+            if(channel.getName().equals(channelName)) {
+                return channel;
+            }
+        }
+        return null;
     }
 
     public void setPassword(String password) 
@@ -220,6 +229,15 @@ public class RedShiftServer implements Runnable {
 
         return this.motd;
 
+    }
+
+    public String toString() {
+        StringBuilder result = new StringBuilder();
+        for(Channel channel : channels) {
+            result.append(channel.toString());
+            result.append("\n");
+        }
+        return result.toString();
     }
 
     public static byte[] hash(String text) 

@@ -6,57 +6,80 @@ public class Command {
         this.server = server;
     }
 
-    public void parseCommand(String commandTxt) {
+    public void parseCommand(String commandTxt, Client client) {
         List<String> commandList = commandTxt.split(" ");
         List<String> arguments = commandList.sublist(1, commandList.size());
         String command = commandList.get(0);
         switch(command) {
             case "/leave":
-                leave();
+                leave(client);
                 break;
             case "/join":
-                join(arguments);
+                join(client, arguments);
                 break;
             case "/create":
-                create(arguments);
+                create(client, arguments);
                 break;
             case "/kick":
-                kick(arguments);
+                kick(client, arguments);
                 break;
             case "/ping":
-                ping();
+                ping(client);
                 break;
             case "/list":
                 list();
                 break;
             case "/help":
-            case "?":
-                help();
+            case default:
+                help(client);
                 break;
         }
     }
 
-    public void leave() {
+    public void isCommand(String message) {
+        if(message!=null && message.startsWith("/"))
+            return true;
+        return false;
+    }
+
+    public void leave(Client client) {
 
     }
 
-    public void join(List<String> args) {
+    public void join(Client client, List<String> args) {
         if(args.size() != 1) {
-            //todo: invalid arg message
+            client.send("Please specify a channel to join");
             return;
         }
         String channel = args.get(0);
+        Channel next = server.findChannel(channel);
+        if(next!= null)
+            client.joinChannel(next);
+        else
+            client.sendMessage("Could not find channel "+channel);
     }
 
-    public void kick(List<String> args) {
+    public void kick(Client client, List<String> args) {
         if(args.size() != 1) {
             //todo: invalid arg message
+            client.send("Please specify a user");
             return;
+        }
+        Channel channel = client.getCurrentChannel();
+        String user = args.get(0);
+        if(channel!=null) {
+            Client kicked = channel.findClient(user);
+            if(kicked==null)
+                client.sendMessage(String.format("Could not find user '%s' in current channel. Try /list for list of current users"), user);
+            else{
+                channel.removeClient(kicked);
+                kicked.sendMessage(String.format("You were removed from %s by %s. Try /join [channel] to join a new channel or reconnect"), channel.getName(), client.getHandle());
+            }
         }
         String user = args.get(0);
     }
 
-    public void delete(List<String> args) {
+    public void delete(Client client, List<String> args) {
         if(args.size() != 2) {
             //todo: invalid arg message
             return;
@@ -70,30 +93,38 @@ public class Command {
         }
     }
 
-    public void create(List<String> args) {
-        if(args.size() != 2) {
+    public void create(Client client, List<String> args) {
+        if(args.size() != 1) {
             //todo: invalid arg message
+            client.sendMessage("Please specify a channel name");
             return;
         }
         String channel = args.get(0);
-        String password = args.get(1);
 
-        if(server.validate(password)){
-            server.create(channel);
-        } else {
-            //error message
-        }
+
+        if(server.findChannel(channel)!=null)
+            client.sendMessage("Channel "+ channel+ " already exists");
+        else
+            server.createChannel(channel);
     }
 
-    public void ping() {
-
-    }
-
-    public void list() {
+    public void ping(Client client) {
 
     }
 
-    public void help() {
+    public void list(Client client) {
+        client.sendMessage(server);
+    }
 
+    public void help(Client client) {
+        String help = "Valid commands:\n" +
+                "/join [channel]\n" +
+                "/leave\n" +
+                "/create [channel]\n" +
+                "/kick [username]\n" +
+                "/ping\n" +
+                "/list\n" +
+                "/help";
+        client.sendMessage(help);
     }
 }

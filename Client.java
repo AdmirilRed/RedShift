@@ -112,9 +112,13 @@ public class Client implements Runnable {
                     this.disconnect();
                     return;
                 }
-                message = String.format("[%s]: %s", this.handle, message);
-                this.currentChannel.broadcast(message);
-                
+
+                if(server.cmd.isCommand(message))
+                    server.cmd.parseCommand(message, this, currentChannel);
+                else {
+                    message = String.format("[%s]: %s", this.handle, message);
+                    this.currentChannel.broadcast(message);
+                }
             }
 
         } catch(Exception e) {
@@ -124,6 +128,10 @@ public class Client implements Runnable {
             System.out.println("Error with client " + this.toString());
             return;
         }
+    }
+
+    public Channel getCurrentChannel(){
+        return currentChannel;
     }
 
 }
