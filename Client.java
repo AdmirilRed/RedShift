@@ -112,11 +112,13 @@ public class Client implements Runnable {
                     this.disconnect();
                     return;
                 }
-                message = String.format("[%s]: %s", this.handle, message);
-                if(server.cmd.isCommand)
+
+                if(server.cmd.isCommand(message))
                     server.cmd.parseCommand(message, this, currentChannel);
-                else
+                else {
+                    message = String.format("[%s]: %s", this.handle, message);
                     this.currentChannel.broadcast(message);
+                }
             }
 
         } catch(Exception e) {

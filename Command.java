@@ -30,8 +30,8 @@ public class Command {
                 list();
                 break;
             case "/help":
-            case "?":
-                help();
+            case default:
+                help(client);
                 break;
         }
     }
@@ -104,7 +104,15 @@ public class Command {
         client.sendMessage(server);
     }
 
-    public void help() {
-
+    public void help(Client client) {
+        String help = "Valid commands:\n" +
+                "/join [channel]\n" +
+                "/leave\n" +
+                "/create [channel]\n" +
+                "/kick [username]\n" +
+                "/ping\n" +
+                "/list\n" +
+                "/help";
+        client.sendMessage(help);
     }
 }
