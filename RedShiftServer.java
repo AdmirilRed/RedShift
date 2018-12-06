@@ -121,7 +121,7 @@ public class RedShiftServer implements Runnable {
 
     public Channel findChannel(String channelName) {
         for(Channel channel : channels){
-            if(channel.getName()==channelName) {
+            if(channel.getName().equals(channelName)) {
                 return channel;
             }
         }

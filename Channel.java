@@ -15,6 +15,14 @@ class Channel {
 
     }
 
+    public Client findClient(String name) {
+        for(Client client: clients) {
+            if(name.equals(client.getHandle()))
+                return client;
+        }
+        return null;
+    }
+
     public String getName() {
 
         return this.name;

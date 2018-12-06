@@ -62,7 +62,19 @@ public class Command {
     public void kick(Client client, List<String> args) {
         if(args.size() != 1) {
             //todo: invalid arg message
+            client.send("Please specify a user");
             return;
+        }
+        Channel channel = client.getCurrentChannel();
+        String user = args.get(0);
+        if(channel!=null) {
+            Client kicked = channel.findClient(user);
+            if(kicked==null)
+                client.sendMessage(String.format("Could not find user '%s' in current channel. Try /list for list of current users"), user);
+            else{
+                channel.removeClient(kicked);
+                kicked.sendMessage(String.format("You were removed from %s by %s. Try /join [channel] to join a new channel or reconnect"), channel.getName(), client.getHandle());
+            }
         }
         String user = args.get(0);
     }

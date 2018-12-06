@@ -130,4 +130,8 @@ public class Client implements Runnable {
         }
     }
 
+    public Channel getCurrentChannel(){
+        return currentChannel;
+    }
+
 }
