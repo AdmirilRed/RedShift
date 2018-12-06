@@ -99,7 +99,7 @@ public class RedShiftServer implements Runnable {
                     this.defaultChannel = temp;
                 
             }
-            //this.cmd = new Command(this);
+            this.cmd = new Command(this);
 
         } catch(Exception e) {
 

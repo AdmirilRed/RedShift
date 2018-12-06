@@ -7,9 +7,11 @@ public class Command {
     }
 
     public void parseCommand(String commandTxt, Client client) {
-        List<String> commandList = commandTxt.split(" ");
-        List<String> arguments = commandList.sublist(1, commandList.size());
-        String command = commandList.get(0);
+        String[] commandList = commandTxt.split(" ");
+        String arguments = null;
+        if(commandList.length==2)
+            arguments = commandList[1];
+        String command = commandList[0];
         switch(command) {
             case "/leave":
                 leave(client);
@@ -27,16 +29,16 @@ public class Command {
                 ping(client);
                 break;
             case "/list":
-                list();
+                list(client);
                 break;
             case "/help":
-            case default:
+            default:
                 help(client);
                 break;
         }
     }
 
-    public void isCommand(String message) {
+    public boolean isCommand(String message) {
         if(message!=null && message.startsWith("/"))
             return true;
         return false;
@@ -46,12 +48,12 @@ public class Command {
 
     }
 
-    public void join(Client client, List<String> args) {
-        if(args.size() != 1) {
-            client.send("Please specify a channel to join");
+    public void join(Client client, String args) {
+        if(args==null) {
+            client.sendMessage("Please specify a channel to join");
             return;
         }
-        String channel = args.get(0);
+        String channel = args;
         Channel next = server.findChannel(channel);
         if(next!= null)
             client.joinChannel(next);
@@ -59,47 +61,42 @@ public class Command {
             client.sendMessage("Could not find channel "+channel);
     }
 
-    public void kick(Client client, List<String> args) {
-        if(args.size() != 1) {
+    public void kick(Client client, String args) {
+        if(args==null) {
             //todo: invalid arg message
-            client.send("Please specify a user");
+            client.sendMessage("Please specify a user");
             return;
         }
         Channel channel = client.getCurrentChannel();
-        String user = args.get(0);
+        String user = args;
         if(channel!=null) {
             Client kicked = channel.findClient(user);
             if(kicked==null)
-                client.sendMessage(String.format("Could not find user '%s' in current channel. Try /list for list of current users"), user);
+                client.sendMessage(String.format("Could not find user '%s' in current channel. Try /list for list of current users", user));
             else{
                 channel.removeClient(kicked);
-                kicked.sendMessage(String.format("You were removed from %s by %s. Try /join [channel] to join a new channel or reconnect"), channel.getName(), client.getHandle());
+                kicked.sendMessage(String.format("You were removed from %s by %s. Try /join [channel] to join a new channel or reconnect", channel.getName(), client.getHandle()));
             }
         }
-        String user = args.get(0);
+        
     }
 
-    public void delete(Client client, List<String> args) {
-        if(args.size() != 2) {
+    public void delete(Client client, String args) {
+        if(args==null) {
             //todo: invalid arg message
             return;
         }
-        String channel = args.get(0);
-        String password = args.get(1);
-        if(server.validate(password)){
-            //server.delete(channel);
-        } else {
-            //error message
-        }
+        String channel = args;
+        
     }
 
-    public void create(Client client, List<String> args) {
-        if(args.size() != 1) {
+    public void create(Client client, String args) {
+        if(args==null) {
             //todo: invalid arg message
             client.sendMessage("Please specify a channel name");
             return;
         }
-        String channel = args.get(0);
+        String channel = args;
 
 
         if(server.findChannel(channel)!=null)
@@ -113,7 +110,7 @@ public class Command {
     }
 
     public void list(Client client) {
-        client.sendMessage(server);
+        client.sendMessage(server.toString());
     }
 
     public void help(Client client) {
