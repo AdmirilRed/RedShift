@@ -5,8 +5,7 @@ import java.io.*;
 class Channel {
 
     private final Set<Client> clients;
-
-    private String name;
+    private final String name;
 
     public Channel(String name) {
 

@@ -22,8 +22,10 @@ public class RedShiftServer implements Runnable {
     public static final int DEFAULT_PORT = 25565;
     public static final int MAX_ATTEMPTS = 3;
 
+     
     private final Set<Channel> channels;
     private final ServerSocket socket;
+    private final String configFile;
     private final int port;
 
     private boolean requirePassword;
@@ -65,6 +67,7 @@ public class RedShiftServer implements Runnable {
         JSONParser parser = new JSONParser();
 
         this.channels = new HashSet<>();
+        this.configFile = configFile;
         InetAddress addr = null;
         int tempPort = -1;
 
