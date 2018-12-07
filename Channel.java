@@ -62,7 +62,7 @@ class Channel {
         return this.clients.size();
     }
 
-    public Set<Clients> getClients() {
+    public Set<Client> getClients() {
         return clients;
     }
 
