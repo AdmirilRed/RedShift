@@ -6,7 +6,6 @@ import java.util.Deque;
 import java.util.*;
 import java.lang.*;
 import java.net.*;
-import org.json.*;
 import java.io.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -126,6 +125,13 @@ public class RedShiftServer implements Runnable {
             }
         }
         return null;
+    }
+
+    public void deleteChannel(Channel channel){
+        for(Client client: channel.getClients()) {
+            client.joinChannel(defaultChannel);
+        }
+        channels.remove(channel);
     }
 
     public void setPassword(String password) 

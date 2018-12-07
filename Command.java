@@ -25,12 +25,17 @@ public class Command {
             case "/kick":
                 kick(client, arguments);
                 break;
-            case "/ping":
-                ping(client);
-                break;
             case "/list":
                 list(client);
                 break;
+            case "/serenade":
+                Channel chan = client.getCurrentChannel();
+                if(chan!=null)
+                    chan.broadcast("Country rooooad\n" +
+                        "take me hooooome\n" +
+                        "to the plaaaaaaaaaace\n" +
+                        "where i beloooonngg");
+                        break;
             case "/help":
             default:
                 help(client);
@@ -84,10 +89,21 @@ public class Command {
     public void delete(Client client, String args) {
         if(args==null) {
             //todo: invalid arg message
+            client.sendMessage("Please specify a channel to delete");
             return;
         }
-        String channel = args;
-        
+        String channelName = args;
+        Channel channel = server.findChannel(channelName);
+        if(channel==null)
+            client.sendMessage(String.format("Channel %s cannot be deleted because it does not exist", channelName));
+        else{
+            if(channel == server.getDefaultChannel()) {
+                client.sendMessage("Cannot delete default channel");
+                return;
+            }
+            channel.broadcast(String.format("Channel %s has been deleted by %s", channelName, client.getHandle()));
+            server.deleteChannel(channel);
+        }
     }
 
     public void create(Client client, String args) {
@@ -105,9 +121,6 @@ public class Command {
             server.createChannel(channel);
     }
 
-    public void ping(Client client) {
-
-    }
 
     public void list(Client client) {
         client.sendMessage(server.toString());
@@ -119,7 +132,7 @@ public class Command {
                 "/leave\n" +
                 "/create [channel]\n" +
                 "/kick [username]\n" +
-                "/ping\n" +
+                "/serenade\n" +
                 "/list\n" +
                 "/help";
         client.sendMessage(help);

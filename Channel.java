@@ -61,6 +61,10 @@ class Channel {
         return this.clients.size();
     }
 
+    public Set<Client> getClients() {
+        return clients;
+    }
+
     public String listHandles() {
 
         StringBuilder result = new StringBuilder();
