@@ -42,8 +42,18 @@ public class Client implements Runnable {
 
     public String toString() {
 
+        return this.toString(false);
+    }
+
+    private String toString(boolean showAddress) {
+
         InetAddress address = this.connection.getInetAddress();
-        String result = String.format("<%s:%s>", this.handle, address);
+        String result;
+
+        if(showAddress)
+            result = String.format("<%s:%s>", this.handle, address);
+        else
+            result = String.format("<%s>", this.handle);
         
         return result;
     }
