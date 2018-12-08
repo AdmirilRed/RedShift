@@ -1,12 +1,13 @@
 {  
     "serverName":"RedShift",
-    "password":"poop",
+    "password":"guest",
     "motd":"Welcome to the server!",
     "address":"",
     "port":"25565",
     "channels": [
         "general",
-        "test"
+        "gaming",
+        "social"
     ]
 }
 
