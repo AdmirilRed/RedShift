@@ -13,14 +13,15 @@ public class Command {
             arguments = commandList[1];
         String command = commandList[0];
         switch(command) {
-            case "/leave":
-                leave(client);
-                break;
+
             case "/join":
                 join(client, arguments);
                 break;
             case "/create":
                 create(client, arguments);
+                break;
+            case "/delete":
+                delete(client, arguments);
                 break;
             case "/kick":
                 kick(client, arguments);
@@ -49,13 +50,9 @@ public class Command {
         return false;
     }
 
-    public void leave(Client client) {
-
-    }
-
     public void join(Client client, String args) {
         if(args==null) {
-            client.sendMessage("Please specify a channel to join");
+            client.sendMessage("Please specify a channel to join.");
             return;
         }
         String channel = args;
@@ -63,13 +60,13 @@ public class Command {
         if(next!= null)
             client.joinChannel(next);
         else
-            client.sendMessage("Could not find channel "+channel);
+            client.sendMessage("Could not find channel "+channel+".");
     }
 
     public void kick(Client client, String args) {
         if(args==null) {
             //todo: invalid arg message
-            client.sendMessage("Please specify a user");
+            client.sendMessage("Please specify a user.");
             return;
         }
         Channel channel = client.getCurrentChannel();
@@ -77,10 +74,10 @@ public class Command {
         if(channel!=null) {
             Client kicked = channel.findClient(user);
             if(kicked==null)
-                client.sendMessage(String.format("Could not find user '%s' in current channel. Try /list for list of current users", user));
+                client.sendMessage(String.format("Could not find user '%s' in current channel. Try /list for list of current users.", user));
             else{
                 channel.removeClient(kicked);
-                kicked.sendMessage(String.format("You were removed from %s by %s. Try /join [channel] to join a new channel or reconnect", channel.getName(), client.getHandle()));
+                kicked.sendMessage(String.format("You were removed from %s by %s. Try /join [channel] to join a new channel or reconnect.", channel.getName(), client.getHandle()));
             }
         }
         
@@ -89,19 +86,19 @@ public class Command {
     public void delete(Client client, String args) {
         if(args==null) {
             //todo: invalid arg message
-            client.sendMessage("Please specify a channel to delete");
+            client.sendMessage("Please specify a channel to delete.");
             return;
         }
         String channelName = args;
         Channel channel = server.findChannel(channelName);
         if(channel==null)
-            client.sendMessage(String.format("Channel %s cannot be deleted because it does not exist", channelName));
+            client.sendMessage(String.format("Channel %s cannot be deleted because it does not exist.", channelName));
         else{
             if(channel == server.getDefaultChannel()) {
-                client.sendMessage("Cannot delete default channel");
+                client.sendMessage("Cannot delete default channel.");
                 return;
             }
-            channel.broadcast(String.format("Channel %s has been deleted by %s", channelName, client.getHandle()));
+            channel.broadcast(String.format("Channel %s has been deleted by %s.", channelName, client.getHandle()));
             server.deleteChannel(channel);
         }
     }
@@ -116,9 +113,10 @@ public class Command {
 
 
         if(server.findChannel(channel)!=null)
-            client.sendMessage("Channel "+ channel+ " already exists");
+            client.sendMessage("Channel "+channel+ " already exists.");
         else
             server.createChannel(channel);
+            client.sendMessage("Channel "+channel+" created.");
     }
 
 
@@ -129,8 +127,8 @@ public class Command {
     public void help(Client client) {
         String help = "Valid commands:\n" +
                 "/join [channel]\n" +
-                "/leave\n" +
                 "/create [channel]\n" +
+                "/delete [channel]\n" +
                 "/kick [username]\n" +
                 "/serenade\n" +
                 "/list\n" +
