@@ -7,7 +7,10 @@ import java.util.*;
 import java.lang.*;
 import java.net.*;
 import java.io.*;
-import java.net.DatagramSocket;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 public class RedShiftServer implements Runnable {
 
@@ -18,8 +21,10 @@ public class RedShiftServer implements Runnable {
     public static final int DEFAULT_PORT = 25565;
     public static final int MAX_ATTEMPTS = 3;
 
+     
     private final Set<Channel> channels;
     private final ServerSocket socket;
+    private final String configFile;
     private final int port;
 
     private boolean requirePassword;
@@ -28,18 +33,23 @@ public class RedShiftServer implements Runnable {
     private byte[] password;
     private String salt;
     private String motd;
+    public Command cmd;
 
     public static void main(String [] args) {
 
         try {
 
-            RedShiftServer server;
-            if(args.length == 0)
-                server = new RedShiftServer(DEFAULT_PORT);
-            else if(args.length == 1)
-                server = new RedShiftServer(Integer.parseInt(args[0]));
-            else
-                server = new RedShiftServer(Integer.parseInt(args[0]), args[1]);
+            RedShiftServer server = null;
+            String configFile = "config.json";
+
+            if(args.length == 1)
+                configFile = args[0];
+            if(new File(configFile).isFile())
+                server = new RedShiftServer("config.json");
+            else {
+                System.out.println("The file \"" + configFile + "\" was not found! Startup aborted.");
+                System.exit(1);
+            }
             Thread t = new Thread(server);
             t.start();
 
@@ -50,40 +60,78 @@ public class RedShiftServer implements Runnable {
         }
     }
 
-    public RedShiftServer()
+    public RedShiftServer(String configFile)
         throws IOException, NoSuchAlgorithmException {
 
-        this(DEFAULT_PORT);
-
-    }
-
-    public RedShiftServer(int port)
-        throws IOException, NoSuchAlgorithmException {
-
-        this(port, null);
-
-    }
-
-    public RedShiftServer(int port, String password) 
-        throws IOException, NoSuchAlgorithmException {
-
-
-        this.port = port;
-        InetAddress addr = InetAddress.getLocalHost();
-        this.socket = new ServerSocket(this.port, DEFAULT_BACKLOG, addr);
+        JSONParser parser = new JSONParser();
 
         this.channels = new HashSet<>();
-        this.defaultChannel = this.createChannel(DEFAULT_CHANNEL_NAME);
+        this.configFile = configFile;
+        InetAddress addr = null;
+        int tempPort = -1;
 
-        this.motd = DEFAULT_MOTD;
+        try {
 
-        if(password != null) {
+            JSONObject config = (JSONObject) parser.parse(new FileReader(configFile));
+            
+            String serverName = (String) config.get("serverName");
+            String password = (String) config.get("password");
+            if(!password.isEmpty())
+                this.setPassword(password);
+            String motd = (String) config.get("motd");
+            if(!motd.isEmpty())
+                this.motd = motd;
+            else
+                this.motd = DEFAULT_MOTD;
+            String address = (String) config.get("address");
+            addr = InetAddress.getLocalHost();
+            if(!address.isEmpty())
+                addr = InetAddress.getByName(address);
+            String port = (String) config.get("port");
+            if(!port.isEmpty())
+                tempPort = Integer.parseInt(port);
+            else
+                tempPort = DEFAULT_PORT;
+            JSONArray channels = (JSONArray) config.get("channels");
+            for(Object obj : channels) {
+                
+                String channelName = (String) obj;
+                Channel temp = this.createChannel(channelName);
+                if(this.defaultChannel == null)
+                    this.defaultChannel = temp;
+                
+            }
+            this.cmd = new Command(this);
 
-            this.requirePassword = true;
-            this.setPassword(password);
+        } catch(Exception e) {
+
+            System.out.println("Error processing the config file!");
+            e.printStackTrace();
+            System.exit(1);
+
+        } finally {
+
+            this.port = tempPort;
+            this.socket = new ServerSocket(this.port, DEFAULT_BACKLOG, addr);
 
         }
 
+    }
+
+    public Channel findChannel(String channelName) {
+        for(Channel channel : channels){
+            if(channel.getName().equals(channelName)) {
+                return channel;
+            }
+        }
+        return null;
+    }
+
+    public void deleteChannel(Channel channel){
+        for(Client client: channel.getClients()) {
+            client.joinChannel(defaultChannel);
+        }
+        channels.remove(channel);
     }
 
     public void setPassword(String password) 
@@ -92,6 +140,7 @@ public class RedShiftServer implements Runnable {
         SecureRandom cryptogen = new SecureRandom();
         this.salt = "" + cryptogen.nextInt();
         this.password = hash(this.salt + password);
+        this.requirePassword = true;
 
     }
 
@@ -178,6 +227,7 @@ public class RedShiftServer implements Runnable {
 
     }
 
+
     public Channel getDefaultChannel() {
 
         return this.defaultChannel;
@@ -188,6 +238,15 @@ public class RedShiftServer implements Runnable {
 
         return this.motd;
 
+    }
+
+    public String toString() {
+        StringBuilder result = new StringBuilder();
+        for(Channel channel : channels) {
+            result.append(channel.toString());
+            result.append("\n");
+        }
+        return result.toString();
     }
 
     public static byte[] hash(String text) 
@@ -229,202 +288,5 @@ public class RedShiftServer implements Runnable {
     }
 }
 
-class Channel {
 
-    private final Set<Client> clients;
 
-    private String name;
-
-    public Channel(String name) {
-
-        this.clients = new HashSet<>();
-        this.name = name;
-
-    }
-
-    public String getName() {
-
-        return this.name;
-    }
-
-    public boolean addClient(Client client) {
-
-        boolean result = this.clients.add(client);
-        if(result) {
-
-            this.broadcast(client.getHandle() + " joined the channel.");
-        }
-
-        return result;
-    }
-
-    public boolean removeClient(Client client) {
-
-        boolean result = this.clients.remove(client);
-        if(result) {
-
-            this.broadcast(client.getHandle() + " disconnected from the channel.");
-        }
-
-        return result;
-    }
-
-    public void broadcast(String message) {
-
-        for(Client client : clients)
-            client.sendMessage(message);
-        System.out.printf("(%s)|%s\n", this.getName(), message);
-    }
-
-    public int currentUsers() {
-
-        return this.clients.size();
-    }
-
-    public String listHandles() {
-
-        StringBuilder result = new StringBuilder();
-        for(Client client : this.clients) {
-
-            result.append(client.getHandle());
-            result.append(", ");
-
-        }
-
-        result.delete(result.length() - 2, result.length());
-        return result.toString();
-    }
-
-    public String toString() {
-
-        String result = String.format("Channel: \"%s\" Clients: %s", this.name, this.clients);
-        return result;
-        
-    }
-
-}
-
-class Client implements Runnable {
-
-    private final RedShiftServer server;
-    private final Socket connection;
-    private final BufferedReader in;
-    private final PrintWriter out;
-    
-    private Channel currentChannel;
-    private boolean validated;
-    
-    private String handle;
-
-    public Client(RedShiftServer server, Socket connection) throws IOException {
-
-        this.server = server;
-        this.connection = connection;
-        this.in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-        this.out = new PrintWriter(connection.getOutputStream());
-        System.out.println("Connection esablished with " + connection.getInetAddress());
-
-    }
-
-    public String getHandle() {
-
-        return this.handle;
-    }
-
-    public void setHandle(String handle) {
-
-        String oldHandle = this.handle;
-        this.handle = handle;
-
-        if(this.currentChannel != null)
-            this.currentChannel.broadcast(oldHandle + " is now known as " + this.handle);
-
-    }
-
-    public String toString() {
-
-        InetAddress address = this.connection.getInetAddress();
-        String result = String.format("<%s:%s>", this.handle, address);
-        
-        return result;
-    }
-
-    public void sendMessage(String message) {
-
-        this.out.println(message);
-        this.out.flush();
-
-    }
-
-    public String getMessage() 
-        throws IOException {
-
-        return this.in.readLine();
-    }
-
-    public void joinChannel(Channel channel) {
-
-        if(this.currentChannel != null)
-            currentChannel.removeClient(this);
-        this.currentChannel = channel;
-        this.sendMessage("Joining channel \"" + this.currentChannel.getName() + "\"");
-        if(this.currentChannel.currentUsers() > 0)
-            this.sendMessage("Online: " + this.currentChannel.listHandles());
-        this.currentChannel.addClient(this);
-    }
-
-    public void disconnect() {
-
-        try {
-
-            this.out.close();
-            this.in.close();
-            this.connection.close();
-
-        } catch(IOException e) {
-
-            e.printStackTrace();
-
-        }
-
-        if(this.currentChannel != null)
-            this.currentChannel.removeClient(this);
-
-    }
-
-    public void run() {
-
-        try {
-
-            this.validated = this.server.authenticate(this);
-            if(!this.validated)
-                return;
-            this.sendMessage(this.server.getMOTD());
-            this.sendMessage("Please enter a username.");
-            String handle = this.in.readLine();
-            this.setHandle(handle);
-            this.joinChannel(this.server.getDefaultChannel());
-            
-            while(true) {
-
-                String message = this.getMessage();
-                if(message == null) {
-
-                    this.disconnect();
-                    return;
-                }
-                message = String.format("[%s]: %s", this.handle, message);
-                this.currentChannel.broadcast(message);
-                
-            }
-
-        } catch(Exception e) {
-
-            this.disconnect();
-            e.printStackTrace();
-            System.out.println("Error with client " + this.toString());
-            return;
-        }
-    }
-
-}
